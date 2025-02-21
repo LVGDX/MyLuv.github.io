@@ -16,33 +16,35 @@ class Paper {
 
   init(paper) {
     const moveHandler = (x, y) => {
-      if (!this.rotating) {
-        this.mouseX = x;
-        this.mouseY = y;
-        this.velX = this.mouseX - this.prevMouseX;
-        this.velY = this.mouseY - this.prevMouseY;
-      }
-      const dirX = x - this.mouseTouchX;
-      const dirY = y - this.mouseTouchY;
-      const dirLength = Math.sqrt(dirX * dirX + dirY * dirY);
-      const dirNormalizedX = dirX / dirLength;
-      const dirNormalizedY = dirY / dirLength;
-      const angle = Math.atan2(dirNormalizedY, dirNormalizedX);
-      let degrees = (360 + Math.round((180 * angle) / Math.PI)) % 360;
-
-      if (this.rotating) {
-        this.rotation = degrees;
-      }
-
-      if (this.holdingPaper) {
+      requestAnimationFrame(() => {
         if (!this.rotating) {
-          this.currentPaperX += this.velX;
-          this.currentPaperY += this.velY;
+          this.mouseX = x;
+          this.mouseY = y;
+          this.velX = this.mouseX - this.prevMouseX;
+          this.velY = this.mouseY - this.prevMouseY;
         }
-        this.prevMouseX = this.mouseX;
-        this.prevMouseY = this.mouseY;
-        paper.style.transform = `translateX(${this.currentPaperX}px) translateY(${this.currentPaperY}px) rotateZ(${this.rotation}deg)`;
-      }
+        const dirX = x - this.mouseTouchX;
+        const dirY = y - this.mouseTouchY;
+        const dirLength = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
+        const dirNormalizedX = dirX / dirLength;
+        const dirNormalizedY = dirY / dirLength;
+        const angle = Math.atan2(dirNormalizedY, dirNormalizedX);
+        let degrees = (360 + Math.round((180 * angle) / Math.PI)) % 360;
+
+        if (this.rotating) {
+          this.rotation = degrees;
+        }
+
+        if (this.holdingPaper) {
+          if (!this.rotating) {
+            this.currentPaperX += this.velX * 0.5;
+            this.currentPaperY += this.velY * 0.5;
+          }
+          this.prevMouseX = this.mouseX;
+          this.prevMouseY = this.mouseY;
+          paper.style.transform = `translateX(${this.currentPaperX}px) translateY(${this.currentPaperY}px) rotateZ(${this.rotation}deg)`;
+        }
+      });
     };
 
     document.addEventListener("mousemove", (e) => moveHandler(e.clientX, e.clientY));
@@ -50,7 +52,7 @@ class Paper {
       if (e.touches.length > 0) {
         moveHandler(e.touches[0].clientX, e.touches[0].clientY);
       }
-    });
+    }, { passive: true });
 
     const startHandler = (x, y, isRightClick) => {
       if (this.holdingPaper) return;
@@ -72,7 +74,7 @@ class Paper {
       if (e.touches.length > 0) {
         startHandler(e.touches[0].clientX, e.touches[0].clientY, false);
       }
-    });
+    }, { passive: true });
 
     window.addEventListener("mouseup", () => {
       this.holdingPaper = false;
